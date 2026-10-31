@@ -1,0 +1,87 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert/strict');
+const source=fs.readFileSync('app.js','utf8');
+const ctx=vm.createContext({console,URLSearchParams,fetch,structuredClone,setTimeout,clearTimeout,document:{querySelector:()=>({addEventListener(){}})},library:[]});
+function load(name){let start=source.indexOf('function '+name+'(');if(start<0)throw Error(name);if(source.slice(start-6,start)==='async ')start-=6;const end=source.indexOf('\n}',start)+2;vm.runInContext(source.slice(start,end),ctx);}
+vm.runInContext(source.match(/^const EDITION_DESCRIPTOR = .*$/m)[0],ctx);
+['referenceAlbumTitle','sortKey','canonicalTitle','songArtistKey','referenceArtistName','normalizeRow','firstValue','parseCsv','reportVisitKey','touchReportVisit','landmarkHoldings','scoreInstrumentLandmark','instrumentTitleKey','mergeInstrumentLandmarks','isAlbumArticle','fetchWikipediaSearchPages','fetchWikidataEntities','wikidataClaimIds','wikidataYear','wikipediaViews','fetchAutomaticInstrumentLandmarks'].forEach(load);
+vm.runInContext(fs.readFileSync('decade-recommendations.js','utf8'),ctx);
+vm.runInContext(fs.readFileSync('composer.js','utf8'),ctx);
+vm.runInContext(fs.readFileSync('instrument-catalog.js','utf8'),ctx);
+vm.runInContext(fs.readFileSync('guitar-guide.js','utf8'),ctx);
+vm.runInContext(source.slice(source.indexOf('const INSTRUMENT_GUIDES ='),source.indexOf('function instrumentGuideFor')),ctx);
+load('instrumentGuideFor');load('entityKey');load('getInstrumentLibraryIndex');vm.runInContext('let instrumentLibraryIndex=null;',ctx);
+ctx.library=vm.runInContext('parseCsv',ctx)(fs.readFileSync('reference-data/Plex-Music-Library.csv','utf8')).map(ctx.normalizeRow);
+ctx.fetchJson=async(url)=>{const r=await fetch(url);if(!r.ok)throw Error(r.status);return r.json();};
+const catalog=JSON.parse(fs.readFileSync('reference-data/recommended-albums.json','utf8'));
+const ranked=ctx.rankDecadeRecommendations(catalog.albums,ctx.library,1970);
+assert(ranked.length>=100);assert(ranked.every((a,i)=>!i || ranked[i-1].score>=a.score));
+assert.equal(ctx.recommendationTitleKey('The Beatles - Mono','The Beatles'),'white album');
+vm.runInContext('recentReportEntries=[]',ctx);
+ctx.touchReportVisit({scope:'Artist',query:'A'});ctx.touchReportVisit({scope:'Artist',query:'B'});ctx.touchReportVisit({scope:'Artist',query:'A'});
+assert.equal(vm.runInContext('recentReportEntries.map(x=>x.query).join(",")',ctx),'B,A');
+const works=vm.runInContext('LISZT_WORKS',ctx);
+assert(ctx.composerWorkMatches(works[0],'Liszt: Sonata in B minor',false));
+assert(!ctx.composerWorkMatches(works[0],'Sonata in B minor',false));
+assert(ctx.composerWorkMatches(works[0],'Sonata in B minor, S.178',false));
+assert(!ctx.composerWorkMatches(works[0],'Sonata, S.1780',false));
+assert(ctx.composerWorkMatches(works[3],'La Campanella',false));
+assert(ctx.composerWorkMatches(works[1],'Études d’exécution transcendante: Mazeppa',true));
+console.log('PASS: recency, Liszt work identity, decade ownership exclusions, descending scores; 1970s candidates:',ranked.length);
+
+const guide=ctx.instrumentGuideFor('sitar');
+const rows=ctx.mergeInstrumentLandmarks(guide.landmarks,[]);
+const gaps=rows.filter(row=>!ctx.landmarkHoldings(row).length);
+assert(rows.length>40);assert(gaps.length>15);assert(gaps.every((row,i)=>!i || gaps[i-1].score>=row.score));
+console.log('PASS: expanded sourced Sitar catalog:',rows.length,'albums;',gaps.length,'gaps with descending MILES scores');
+const fixture={release:{id:'known-edition',media:[{tracks:[{title:'Sonata in B minor, S.178',recording:{id:'sonata'}},{title:'Hungarian Rhapsody No. 2, S.244',recording:{id:'rhapsody'}}]}]}};
+const tracks=ctx.composerTrackRows({album:'Liszt: Compilation',artist:'Various Artists'},fixture);
+assert.equal(tracks.filter(track=>ctx.composerWorkMatches(works[0],track.title,track.lisztContext)).length,1);
+assert.equal(tracks.filter(track=>ctx.composerWorkMatches(works[4],track.title,track.lisztContext)).length,1);
+console.log('PASS: individual works found on a compilation credited to Various Artists');
+
+assert.equal(ctx.instrumentTitleKey('Live: Ravi Shankar at the Monterey International Pop Festival','Ravi Shankar'),ctx.instrumentTitleKey('Live at the Monterey International Pop Festival','Ravi Shankar'));
+const combined=ctx.mergeInstrumentLandmarks([{artist:'Ravi Shankar',title:'Live at the Monterey International Pop Festival',importance:'Historic Concert'}],[{artist:'Ravi Shankar',title:'Live: Ravi Shankar at the Monterey International Pop Festival',sourceUrl:'https://example.test'}]);
+assert.equal(combined.length,1);assert(combined[0].sourceUrl);
+console.log('PASS: alternative sourced album titles consolidate into the same owned edition');
+['titleConfidence','titleMatch','bestReleaseGroupForItem','collectionTitleKey','collectionComponentHoldings','renderOwnedArtistChronology','buildFusion','isEdition','escapeHtml'].forEach(load);
+const beatles=ctx.library.filter(row=>row.artist==='The Beatles');
+const albumGroups=[['meet','Meet The Beatles!',1964],['meet2014','Meet The Beatles!',2014],['second','The Beatles’ Second Album',1964],['story','The Beatles’ Story',1964],['early','The Early Beatles',1965],['yesterday','Yesterday and Today',1966],['us','The U.S. Albums',2014],['capitol1','The Capitol Albums, Volume 1',2004],['help','Help!',1965],['helpUS','Help! (Original Motion Picture Soundtrack)',1965]].map(([id,title,year])=>({id,title,'first-release-date':String(year),'primary-type':'Album'}));
+for(const [title,id] of [['Meet the Beatles! (The Capitol Albums)','meet'],['Meet the Beatles! (US Albums)','meet'],["The Beatles' Second Album (The US Albums)",'second'],['The Beatles Story (The US Albums)','story'],['The Early Beatles (The Capitol Albums)','early'],['Yesterday and Today (The US Albums)','yesterday']]) {
+  const owned=beatles.find(row=>row.album===title);assert(owned,title+' exists in the snapshot');assert.equal(ctx.bestReleaseGroupForItem(owned,albumGroups).id,id);
+}
+assert.equal(ctx.referenceAlbumTitle('The U.S. Albums'),'The U.S. Albums');
+assert.equal(ctx.referenceAlbumTitle('The Capitol Albums, Volume 1'),'The Capitol Albums, Volume 1');
+assert.notEqual(ctx.canonicalTitle('Help!'),ctx.canonicalTitle('Help! (Original Motion Picture Soundtrack)'));
+assert.equal(ctx.collectionComponentHoldings(albumGroups.find(row=>row.id==='us'),beatles).length,5);
+assert.equal(ctx.collectionComponentHoldings(albumGroups.find(row=>row.id==='capitol1'),beatles).length,0);
+ctx.wishlistButton=()=>'';ctx.compactStoreLinks=()=>'';ctx.discogsAlbumUrl=()=>'';
+const html=ctx.renderOwnedArtistChronology({artist:{name:'The Beatles'},groups:albumGroups},beatles);
+assert(/data-release-group-id="meet"[^]*?<b>2 owned<\/b>/.test(html));
+assert(/data-release-group-id="us"[^]*?<b>5 component albums<\/b>/.test(html));
+assert(!html.includes('Not in Plex'));
+console.log('PASS: actual Beatles U.S./Capitol editions match their albums; box components are distinct from full-box ownership');
+
+assert(/data-release-group-id="meet2014"[^]*?<b>Same Title In Plex<\/b>/.test(html));
+console.log("PASS: same-title reference groups show edition uncertainty instead of a false missing-album claim");
+
+['instrumentArtistCollection','instrumentLandmarkCard'].forEach(load);
+const guitar=ctx.instrumentGuideFor('guitar');
+assert.equal(guitar.players.length,30);
+assert(guitar.players.every(p=>p.sourceUrl && p.contribution && p.listen));
+assert(!guitar.players.some(p=>p.name.includes('Miley')));
+assert.equal(guitar.expandAutomatically,false);
+assert.notEqual(ctx.instrumentGuideFor('bass guitar')?.title,'Guitar');
+const guitarResults=ctx.mergeInstrumentLandmarks(guitar.landmarks,[]).map(entry=>({entry,holdings:ctx.landmarkHoldings(entry)}));
+const guitarOwned=guitarResults.filter(r=>r.holdings.length);
+const guitarRelated=ctx.instrumentArtistCollection(guitar,guitarOwned);
+assert(guitarOwned.length>=40);
+assert(guitarRelated.length>=100);
+for(const artist of ['Led Zeppelin','Jeff Beck','The Jimi Hendrix Experience','The Beatles']) assert(guitarOwned.some(r=>r.entry.artist===artist),artist);
+assert(guitarOwned.find(r=>r.entry.title==='Led Zeppelin IV').holdings.some(h=>h.album==='IV'));
+const cleanCard=ctx.instrumentLandmarkCard({title:'Album',artist:'Artist',year:'1970',credit:'Specified instrument thing',note:'Wikipedia documents this instrument',score:75},[]);
+assert(!cleanCard.includes('Specified instrument thing'));
+assert(!cleanCard.includes('Wikipedia documents this instrument'));
+assert(cleanCard.includes('Album') && cleanCard.includes('Artist') && cleanCard.includes('1970'));
+const described=guitar.landmarks.find(r=>r.description);
+assert(ctx.instrumentLandmarkCard(described,[]).includes(ctx.escapeHtml(described.description)));
+console.log('PASS: guitar contributors, clean cards and collection matches:',guitarOwned.length,'reference albums;',guitarRelated.length,'additional artist albums');
