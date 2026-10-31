@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="impact-site-verification" value="06b63e40-e5b1-41c2-ab54-d05dac3fe7e6" />
+    <meta name="theme-color" content="#08090c" />
+    <meta name="description" content="Miles — personal Plex music-library analysis." />
+    <title>Miles — Your Mileage May Vary</title>
+    <link rel="stylesheet" href="./styles.css?v=20261022-centered-circle" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div class="brand-mark" aria-hidden="true"><span>m</span></div>
+        <div>
+          <p class="eyebrow">Music Library Analyzer</p>
+          <h1>miles</h1>
+          <p class="tagline">Your Mileage May Vary.</p>
+        </div>
+        <button id="miles-menu-open" class="button secondary miles-menu-button" type="button" aria-haspopup="dialog" aria-controls="miles-menu">☰ Menu</button>
+      </header>
+
+      <section id="stats" class="stats" aria-label="Library summary" hidden>
+        <article><strong id="album-count">0</strong><span>Albums</span></article>
+        <article><strong id="artist-count">0</strong><span>Artists</span></article>
+        <article><strong id="year-count">0</strong><span>Years</span></article>
+        <article><strong id="genre-count">0</strong><span>Genres</span></article>
+      </section>
+
+      <section class="card" aria-labelledby="run-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">EXPLORE</p>
+            <h2 id="run-heading">What do you want to Miles?</h2>
+          </div>
+        </div>
+
+        <div id="scope-tabs" class="scope-tabs" role="tablist" aria-label="Analysis scope"></div>
+
+        <form id="miles-form" class="query-form">
+          <label for="query">Search <span id="scope-label">Artist</span></label>
+          <div class="query-row">
+            <input id="query" type="search" autocomplete="off" placeholder="e.g. The Beatles" required />
+            <button class="button primary" type="submit">Run Miles</button>
+          </div>
+        </form>
+      </section>
+
+
+
+
+
+      <section id="report" class="report" aria-live="polite" hidden>
+        <div class="report-section-controls" role="group" aria-label="Report sections"><button id="report-expand-all" type="button">Expand All</button><button id="report-collapse-all" type="button">Collapse All</button></div>
+        <button id="tangled-web-toggle" class="tangled-web-toggle" type="button" aria-haspopup="dialog" hidden>View The Tangled Web</button>
+        <aside id="research-status" class="research-status" hidden aria-label="Research progress"><div class="research-status-heading"><strong role="status" aria-live="polite"></strong><span data-research-time></span></div><progress aria-label="Research checks finished"></progress><p data-research-detail></p></aside>
+        <div id="report-content"></div>
+      </section>
+    </main>
+<dialog id="miles-menu" class="miles-panel" aria-labelledby="miles-menu-title"><div class="miles-panel-head"><h2 id="miles-menu-title">Miles menu</h2><button type="button" class="button ghost" data-panel-close>Close</button></div><nav class="miles-menu-links" aria-label="Miles navigation">
+<button type="button" data-menu-panel="collection-dialog"><strong>Collection</strong><span>Stats and Plex collection controls</span></button>
+<button type="button" data-menu-panel="wishlist-dialog"><strong>Wishlist <span id="menu-wishlist-count">(0)</span></strong><span>Your saved songs, albums, and artists</span></button>
+<button type="button" data-menu-panel="explore-dialog"><strong>Explore Your Collection</strong><span>Discover something you already own</span></button>
+<button type="button" data-menu-panel="tangled-web-dialog"><strong>The Tangled Web</strong><span>Follow your journey through Miles</span></button>
+<button type="button" data-menu-panel="notebook-dialog"><strong>Listening Notebook</strong><span>Your notes and favorite discoveries</span></button>
+</nav></dialog>
+<dialog id="collection-dialog" class="miles-panel" aria-labelledby="collection-dialog-title"><div class="miles-panel-head"><h2 id="collection-dialog-title">Your collection</h2><button type="button" class="button ghost" data-panel-close>Close</button></div>      <section class="card import-card" aria-labelledby="library-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">YOUR COLLECTION</p>
+            <h2 id="library-heading">Collection</h2>
+          </div>
+          <span id="library-status" class="status-pill">No library loaded</span>
+        </div>
+        <p class="muted">Miles currently uses your Plex metadata snapshot. Load a newer export or reconnect your saved collection here.</p>
+        <div id="collection-stats" class="stats" aria-label="Collection statistics"></div>
+        <p id="plex-state" class="muted" role="status"></p>
+        <div class="button-row"><button id="plex-connect" class="button secondary" type="button">Connect Plex snapshot</button><button id="plex-disconnect" class="button ghost" type="button">Disconnect collection</button>
+          <label class="button primary" for="library-file">Load a newer CSV / JSON</label>
+          <input id="library-file" type="file" accept=".csv,.json,application/json,text/csv" hidden />
+          <button id="load-last" class="button secondary" type="button">Use my last library</button>
+          <button id="forget-library" class="button ghost" type="button">Forget saved copy</button>
+        </div>
+        <p id="import-message" class="message" role="status" aria-live="polite"></p>
+      </section>
+
+</dialog>
+<dialog id="wishlist-dialog" class="miles-panel" aria-labelledby="wishlist-dialog-title"><div class="miles-panel-head"><h2 id="wishlist-dialog-title">Wishlist</h2><button type="button" class="button ghost" data-panel-close>Close</button></div>      <section class="card wishlist-card" aria-labelledby="wishlist-heading">
+        <div class="section-heading"><div><p class="eyebrow">GROW YOUR COLLECTION</p><h2 id="wishlist-heading">Your wishlist <span id="wishlist-count">(0)</span></h2></div></div>
+        <p class="muted">Save songs, albums, and artists to explore or seek out. This list stays in this browser.</p>
+        <details class="wishlist-add"><summary>Add an item yourself</summary><form id="wishlist-form" class="wishlist-form">
+          <label>Type <select name="type" id="wishlist-type"><option value="Album">Album</option><option value="Song">Song</option><option value="Artist">Artist</option></select></label>
+          <label>Artist <input name="artist" required autocomplete="off" placeholder="e.g. Neil Diamond" /></label>
+          <label><span id="wishlist-title-label">Album</span> <input name="album" id="wishlist-title" required autocomplete="off" placeholder="Album or exact edition" /></label>
+          <label>Year <input name="year" inputmode="numeric" pattern="[0-9]{4}" placeholder="Optional" /></label>
+          <button class="button primary" type="submit">Add to wishlist</button>
+        </form></details>
+        <div class="wishlist-controls"><label for="wishlist-sort">Sort by</label><select id="wishlist-sort"><option value="recent">Recently added</option><option value="oldest">Oldest added</option><option value="year">Release year</option><option value="artist">Artist</option><option value="album">Title</option><option value="type">Type</option></select></div>
+        <div id="wishlist-items" class="wishlist-items" aria-live="polite"></div>
+      </section>
+
+</dialog>
+<dialog id="explore-dialog" class="miles-panel" aria-labelledby="explore-dialog-title"><div class="miles-panel-head"><h2 id="explore-dialog-title">Explore Your Collection</h2><button type="button" class="button ghost" data-panel-close>Close</button></div>      <section id="collection-discovery" class="card discovery-card" aria-labelledby="discovery-heading">
+        <p class="eyebrow">LISTEN TO WHAT YOU OWN</p><h2 id="discovery-heading">Explore your collection</h2>
+        <label class="discovery-filter">Genre <select id="discovery-genre"><option value="">Any genre</option></select></label>
+        <div class="button-row"><button type="button" class="button primary" data-discover="random">Surprise me</button><button type="button" class="button secondary" data-discover="overlooked">Find an overlooked album</button></div>
+        <div class="discovery-instrument"><label for="discovery-instrument">Find a credited instrument</label><div class="query-row"><input id="discovery-instrument" placeholder="e.g. Mellotron" /><button type="button" class="button secondary" data-discover="instrument">Find an album I own</button></div></div>
+        <div id="discovery-result" aria-live="polite"></div>
+      </section>
+</dialog>
+    <dialog id="notebook-dialog" class="miles-panel" aria-labelledby="notebook-dialog-title"><div class="miles-panel-head"><h2 id="notebook-dialog-title">Listening Notebook</h2><button type="button" class="button ghost" data-panel-close>Close</button></div>      <section class="card notebook-card"><p class="eyebrow">YOUR DISCOVERIES</p><label class="notebook-filter"><input id="notebook-favorites" type="checkbox" /> Favorites only</label><div id="listening-notebook-items"></div></section></dialog>
+    <dialog id="tangled-web-dialog" class="tangled-web-dialog" aria-labelledby="tangled-web-dialog-title">
+      <div class="tangled-web-dialog-head">
+        <div><p class="eyebrow">YOUR PATH THROUGH MILES</p><h2 id="tangled-web-dialog-title">The Tangled Web</h2></div>
+        <button id="tangled-web-close" class="button ghost" type="button">Close</button>
+      </div>
+      <p class="muted">Every search and drilldown in this journey. Select any stop to return to its saved report.</p>
+      <div class="history-controls"><button type="button" class="button secondary" data-history-back disabled>← Back</button><span id="history-position" aria-live="polite">No stops yet</span><button type="button" class="button secondary" data-history-forward disabled>Forward →</button></div>
+      <nav id="tangled-web-path" class="tangled-web-path" aria-label="Complete Miles navigation path"></nav>
+    </dialog>
+    <p id="wishlist-feedback" class="wishlist-feedback" role="status" aria-live="polite"></p>
+    <script src="./listening.js?v=20261022-collections" defer></script>
+    <script src="./report-sections.js?v=20261022-collections" defer></script>
+    <script src="./research-status.js?v=20261022-collections" defer></script>
+    <script src="./decade-recommendations.js?v=20261022" defer></script>
+    <script src="./instrument-catalog.js?v=20261022" defer></script>
+    <script src="./guitar-guide.js?v=20261022-guitar" defer></script>
+    <script src="./composer.js?v=20261022" defer></script>
+    <script src="./app.js?v=20261022-guitar" defer></script>
+  </body>
+</html>
