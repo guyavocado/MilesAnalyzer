@@ -1,4 +1,1 @@
-node_modules/
-.env
-.env.local
-.DS_Store
+reference-data/Plex-Music-Library.csv
