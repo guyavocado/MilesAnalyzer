@@ -10,7 +10,7 @@ const GUITAR_GUIDE = {
     "guitarist"
   ],
   "introLabel": "GUITAR",
-  "introduction": "Explore distinctive guitar voices across blues, rock, jazz, acoustic music, classical and flamenco. The selection below follows contributions to the instrument, with sources and recordings to start with.",
+  "introduction": ["The guitar developed over centuries from earlier plucked-string instruments. The modern six-string classical guitar took shape in the nineteenth century, notably through the work of Spanish maker Antonio de Torres. Steel-string acoustics subsequently became central to American folk, blues and country; electric amplification transformed the guitar into a lead instrument that could compete with loud bands.", "Early electric-guitar innovators included Charlie Christian, whose amplified single-note jazz lines helped establish the instrument as a solo voice, and T-Bone Walker, whose electric blues phrasing influenced generations of players. Les Paul explored solid-body construction and multitrack recording; Fender introduced the mass-produced Broadcaster/Telecaster design around 1950–51 and the Stratocaster in 1954. Gibson introduced the Les Paul model in 1952. These developments changed the sound, sustain and expressive possibilities of popular music.", "Listen for the different musical functions: rhythm accompaniment, blues bends, jazz improvisation, classical counterpoint, slide phrasing and studio-created textures. The featured players and recordings below are selected examples, not claims that every album by a guitarist features a documented performance on the instrument."],
   "sourceLabel": "Read about guitar in jazz",
   "sourceUrl": "https://www.bsmny.org/instrument-discovery/jazz-guitar/",
   "players": [
