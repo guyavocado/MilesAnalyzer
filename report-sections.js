@@ -48,6 +48,34 @@
     const fold=visible.filter(row=>row.readingArea>0).sort((a,b)=>b.readingArea-a.readingArea)[0]?.fold || visible[0]?.fold;
     anchor = fold ? {key:sectionKey(fold),top:fold.getBoundingClientRect().top} : null;
   }
+  // Keep long lists readable without dropping tracks or album links.
+  // Each research refresh replaces its list, so newly rendered lists get regrouped.
+  function organizeLongLists() {
+    for (const list of root.querySelectorAll("#album-tracks ol.track-list, #missing-tracks ol.track-list, #instrument-artist-albums .album-list")) {
+      if (list.dataset.milesGrouped === "true") continue;
+      const entries = [...list.children];
+      if (entries.length <= 12) continue;
+      list.dataset.milesGrouped = "true";
+      const isTracks = list.matches("ol");
+      const noun = isTracks ? "tracks" : "albums";
+      const fragment = document.createDocumentFragment();
+      // The first twelve remain visible; the rest are browsable in manageable groups.
+      for (let start = 12; start < entries.length; start += 12) {
+        const end = Math.min(start + 12, entries.length);
+        const details = document.createElement("details");
+        details.className = "miles-list-chunk";
+        const summary = document.createElement("summary");
+        summary.textContent = `Show ${noun} ${start + 1}–${end} of ${entries.length}`;
+        const group = document.createElement(isTracks ? "ol" : "div");
+        group.className = list.className;
+        if (isTracks) group.start = start + 1;
+        group.append(...entries.slice(start, end));
+        details.append(summary, group);
+        fragment.append(details);
+      }
+      list.after(fragment);
+    }
+  }
   function prepareSections() {
     observer.disconnect();
     // The report's existing order is retained: story, music, releases, credits and notes.
@@ -106,6 +134,7 @@
         }
       }
     }
+    organizeLongLists();
     rememberAnchor();
     observer.observe(root, {childList:true, subtree:true, attributes:true, attributeFilter:["hidden"]});
   }
